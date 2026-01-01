@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Donation Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <nav>
+        <div class="logo">🩸 BloodConnect</div>
+        <ul>
+            <li><a href="{{ url_for('main.index') }}">{{ get_text('home') }}</a></li>
+            <li><a href="{{ url_for('main.about') }}">About Us</a></li>
+            <li><a href="{{ url_for('main.contact') }}">Contact Us</a></li>
+            {% if session.get('user_id') %}
+            {% if session.get('role') == 'donor' %}
+            <li><a href="{{ url_for('donor.dashboard') }}">{{ get_text('dashboard') }}</a></li>
+            {% elif session.get('role') == 'requester' %}
+            <li><a href="{{ url_for('requester.dashboard') }}">{{ get_text('dashboard') }}</a></li>
+            {% elif session.get('role') == 'admin' %}
+            <li><a href="{{ url_for('admin.dashboard') }}">{{ get_text('dashboard') }}</a></li>
+            <li><a href="{{ url_for('admin.users') }}">Users</a></li>
+            <li><a href="{{ url_for('admin.messages') }}" style="position: relative;">Messages
+                    {% if unread_message_count > 0 %}
+                    <span class="badge"
+                        style="position: absolute; top: -8px; right: -10px; background: #DC143C; color: white; padding: 0.2rem 0.5rem; border-radius: 50%; font-size: 0.7rem;">{{
+                        unread_message_count }}</span>
+                    {% endif %}
+                </a></li>
+            {% endif %}
+            <li><a href="{{ url_for('auth.logout') }}">{{ get_text('logout') }}</a></li>
+            {% else %}
+            <li><a href="{{ url_for('auth.login') }}">{{ get_text('login') }}</a></li>
+            <li><a href="{{ url_for('auth.register') }}">{{ get_text('register') }}</a></li>
+            {% endif %}
+            <li class="lang-switch">
+                {% if lang == 'en' %}
+                <a href="{{ url_for('main.set_language', lang='ar') }}">العربية</a>
+                {% else %}
+                <a href="{{ url_for('main.set_language', lang='en') }}">English</a>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <ul class="flashes">
+            {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Blood Donation Platform</p>
+    </footer>
+</body>
+
+</html>

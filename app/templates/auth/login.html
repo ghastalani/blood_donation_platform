@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ get_text('login') }}</h2>
+<form method="POST">
+    <label for="email">{{ get_text('email') }}:</label>
+    <input type="email" name="email" id="email" required>
+
+    <label for="password">{{ get_text('password') }}:</label>
+    <input type="password" name="password" id="password" required>
+
+    <button type="submit" class="btn">{{ get_text('login') }}</button>
+</form>
+{% endblock %}

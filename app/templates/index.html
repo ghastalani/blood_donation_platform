@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Animated Particle Background -->
+<canvas id="particleCanvas"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.5;"></canvas>
+
+<div class="hero-section"
+    style="text-align: center; padding: 4rem 1rem; background: var(--primary-gradient); color: white; border-radius: 0 0 50% 50% / 20px; margin-top: -2rem; position: relative;">
+    <!-- Logo Placeholder -->
+    <div class="logo" style="font-size: 4rem; margin-bottom: 1rem;">
+        🩸
+    </div>
+    <h1 style="font-size: 3rem; margin-bottom: 1rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">{{
+        get_text('welcome_msg') }}</h1>
+    <p style="font-size: 1.5rem; opacity: 0.9;">{{ get_text('motto') }}</p>
+
+    <div class="hero-cta" style="margin-top: 3rem;">
+        {% if session.user_id %}
+        <a href="
+            {% if session.role == 'admin' %}
+                {{ url_for('admin.dashboard') }}
+            {% elif session.role == 'donor' or session.role == 'both' or session['role'] == 'donor' %}
+                {{ url_for('donor.dashboard') }}
+            {% else %}
+                {{ url_for('requester.dashboard') }}
+            {% endif %}
+            " class="btn white"
+            style="background: white; color: var(--primary-color); font-weight: bold; padding: 1rem 2rem; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">{{
+            get_text('go_to_dashboard') }}</a>
+        {% else %}
+        <a href="{{ url_for('auth.register') }}" class="btn white"
+            style="background: white; color: var(--primary-color); font-weight: bold; padding: 1rem 2rem; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">{{
+            get_text('cta_btn') }}</a>
+        <a href="{{ url_for('auth.login') }}" class="btn outline"
+            style="border: 2px solid white; color: white; padding: 1rem 2rem; font-size: 1.2rem; margin-left: 1rem;">{{
+            get_text('login') }}</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="features-section"
+    style="padding: 4rem 1rem; max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+    <div class="feature-card" style="text-align: center; padding: 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🏥</div>
+        <h3>Verify & Connect</h3>
+        <p>Verified NNI ensures safe and trusted connections between donors and patients.</p>
+    </div>
+    <div class="feature-card" style="text-align: center; padding: 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">⏱️</div>
+        <h3>Quick Interaction</h3>
+        <p>Instant approval system and direct contact for urgent needs.</p>
+    </div>
+    <div class="feature-card" style="text-align: center; padding: 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+        <h3>Privacy First</h3>
+        <p>Your contact details are secure and only shared with approved requests.</p>
+    </div>
+</div>
+
+<script>
+    // Humanitarian Particle Animation
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    const particleCount = 50;
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 3 + 1;
+            this.speedX = Math.random() * 0.5 - 0.25;
+            this.speedY = Math.random() * 0.5 - 0.25;
+            this.opacity = Math.random() * 0.5 + 0.3;
+        }
+
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+
+            if (this.x > canvas.width) this.x = 0;
+            if (this.x < 0) this.x = canvas.width;
+            if (this.y > canvas.height) this.y = 0;
+            if (this.y < 0) this.y = canvas.height;
+        }
+
+        draw() {
+            ctx.fillStyle = `rgba(139, 0, 0, ${this.opacity})`;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function init() {
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+
+            // Draw subtle connections
+            for (let j = i; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 150) {
+                    ctx.strokeStyle = `rgba(139, 0, 0, ${0.2 * (1 - distance / 150)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    init();
+    animate();
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+</script>
+{% endblock %}

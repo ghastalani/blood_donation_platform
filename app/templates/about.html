@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Animated Particle Background -->
+<canvas id="particleCanvas"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.4;"></canvas>
+
+<div class="about-container" style="max-width: 900px; margin: 0 auto; padding: 2rem; position: relative;">
+    <div class="hero-section"
+        style="text-align: center; padding: 3rem 0; background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%); color: white; border-radius: 12px; margin-bottom: 3rem;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">🩸 About Our Mission</h1>
+        <p style="font-size: 1.2rem; opacity: 0.95;">Connecting donors with those in need, one drop at a time</p>
+    </div>
+
+    <div class="mission-card"
+        style="background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h2 style="color: #8B0000; margin-bottom: 1.5rem;">Our Mission</h2>
+        <p style="line-height: 1.8; color: #333; font-size: 1.1rem;">
+            Every year, millions of lives hang in the balance, waiting for a single act of kindness: blood donation.
+            Our platform was born from a simple truth — <strong>saving lives should never be complicated</strong>.
+        </p>
+        <p style="line-height: 1.8; color: #333; font-size: 1.1rem; margin-top: 1rem;">
+            We bridge the gap between those who can give and those who urgently need. Whether you're a student seeking
+            help
+            for a loved one or a donor ready to make a difference, our platform ensures that <strong>help is just a
+                click away</strong>.
+        </p>
+    </div>
+
+    <div class="values-section"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+        <div class="value-card" style="background: #F5F5F5; padding: 2rem; border-radius: 12px; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🤝</div>
+            <h3 style="color: #8B0000; margin-bottom: 0.5rem;">Cooperation</h3>
+            <p style="color: #666;">Together, we create a network of hope and support</p>
+        </div>
+        <div class="value-card" style="background: #F5F5F5; padding: 2rem; border-radius: 12px; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+            <h3 style="color: #8B0000; margin-bottom: 0.5rem;">Security</h3>
+            <p style="color: #666;">Your data is protected with the highest standards</p>
+        </div>
+        <div class="value-card" style="background: #F5F5F5; padding: 2rem; border-radius: 12px; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+            <h3 style="color: #8B0000; margin-bottom: 0.5rem;">Speed</h3>
+            <p style="color: #666;">Fast, efficient connections when time matters most</p>
+        </div>
+    </div>
+
+    <div class="impact-section"
+        style="background: #8B0000; color: white; padding: 2.5rem; border-radius: 12px; text-align: center; margin: 3rem 0;">
+        <h2 style="margin-bottom: 1rem;">Every Drop Counts</h2>
+        <p style="font-size: 1.2rem; opacity: 0.95; line-height: 1.8;">
+            One donation can save up to <strong>three lives</strong>. By joining our platform, you become part of a
+            humanitarian movement dedicated to preserving life and bringing hope to families in crisis.
+        </p>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem;">
+        <a href="{{ url_for('auth.register') }}" class="btn"
+            style="background: #8B0000; color: white; padding: 1rem 2.5rem; text-decoration: none; border-radius: 8px; font-size: 1.1rem; display: inline-block;">Join
+            Us Today</a>
+    </div>
+</div>
+
+<script>
+    // Humanitarian Particle Animation
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    const particleCount = 40;
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2.5 + 0.5;
+            this.speedX = Math.random() * 0.4 - 0.2;
+            this.speedY = Math.random() * 0.4 - 0.2;
+            this.opacity = Math.random() * 0.4 + 0.2;
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            if (this.x > canvas.width) this.x = 0;
+            if (this.x < 0) this.x = canvas.width;
+            if (this.y > canvas.height) this.y = 0;
+            if (this.y < 0) this.y = canvas.height;
+        }
+        draw() {
+            ctx.fillStyle = `rgba(139, 0, 0, ${this.opacity})`;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function init() {
+        for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach((p, i) => {
+            p.update();
+            p.draw();
+            for (let j = i; j < particles.length; j++) {
+                const dx = p.x - particles[j].x;
+                const dy = p.y - particles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 120) {
+                    ctx.strokeStyle = `rgba(139, 0, 0, ${0.15 * (1 - distance / 120)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        });
+        requestAnimationFrame(animate);
+    }
+
+    init();
+    animate();
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+</script>
+{% endblock %}

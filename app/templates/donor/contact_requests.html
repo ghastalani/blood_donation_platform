@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ get_text('requests_list') }}</h2>
+
+<div class="requests-list">
+    {% for req in requests %}
+    <div class="card request-card">
+        <h3>Request from {{ req.requester_name }}</h3>
+        <p><strong>{{ get_text('date') }}:</strong> {{ req.created_at }}</p>
+        <div class="actions">
+            <a href="{{ url_for('donor.contact_action', request_id=req.id, action='approved') }}" class="btn success">{{
+                get_text('approve') }}</a>
+            <a href="{{ url_for('donor.contact_action', request_id=req.id, action='rejected') }}" class="btn danger">{{
+                get_text('reject') }}</a>
+        </div>
+    </div>
+    {% else %}
+    <p>{{ get_text('no_pending_requests') }}</p>
+    {% endfor %}
+</div>
+
+<a href="{{ url_for('donor.dashboard') }}" class="btn secondary">{{ get_text('back_to_dashboard') }}</a>
+{% endblock %}

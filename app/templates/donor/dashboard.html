@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="donor-dashboard-container" style="max-width: 800px; margin: 0 auto;">
+    <h2 style="text-align: center; margin-bottom: 2rem;">{{ get_text('dashboard') }} - {{ get_text('donor') }}</h2>
+
+    <div class="card status-card"
+        style="text-align: center; padding: 2rem; margin-bottom: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <h3>{{ get_text('welcome_user_msg') }} {{ user.name }}</h3>
+        <p style="font-size: 1.2rem; margin: 1rem 0;">{{ get_text('status') }}:
+            {% if user.is_available %}
+            <span class="badge success"
+                style="background: #e8f5e9; color: #2e7d32; padding: 0.5rem 1rem; border-radius: 20px;">{{ 'Available'
+                }}</span>
+            {% else %}
+            <span class="badge danger"
+                style="background: #ffebee; color: #c62828; padding: 0.5rem 1rem; border-radius: 20px;">{{ 'Unavailable'
+                }}</span>
+            {% endif %}
+        </p>
+        {% if not user.is_available and user.next_eligible_date %}
+        <p style="color: #666;">You will be eligible to donate after: <strong>{{ user.next_eligible_date }}</strong></p>
+        {% endif %}
+
+        <div class="dashboard-actions" style="margin-top: 1.5rem;">
+            <a href="{{ url_for('donor.contact_requests') }}" class="btn" style="position: relative;">
+                {{ get_text('view_contact_requests') }}
+                <!-- Maybe add a badge count here if I passed it -->
+            </a>
+        </div>
+    </div>
+
+    {% if user.is_available %}
+    <h3 style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 1rem;">Incoming Donation Requests</h3>
+
+    {% if requests %}
+    <div class="requests-list" style="margin-top: 1.5rem;">
+        {% for req in requests %}
+        <div class="request-card"
+            style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 1rem; display: flex; flex-direction: column; align-items: center; text-align: center;">
+            <div
+                style="width: 50px; height: 50px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 1rem;">
+                {{ req.blood_type_required }}
+            </div>
+            <h4 style="margin: 0 0 0.5rem 0;">{{ req.hospital_location }}</h4>
+            <p style="color: #666; margin: 0 0 1rem 0;">{{ get_text('date') }}: {{ req.donation_date }} | {{
+                req.donation_time_start }}</p>
+            <p style="font-style: italic; margin-bottom: 1.5rem;">"{{ req.message }}"</p>
+
+            <a href="{{ url_for('donor.accept_request', request_id=req.id) }}" class="btn"
+                style="width: 100%; max-width: 200px;">
+                {{ get_text('approve') }} / Accept
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="text-align: center; color: #888; margin-top: 2rem;">{{ get_text('no_donors_found') }} (No active needs in
+        your city)</p>
+    {% endif %}
+    {% else %}
+    <div class="cooldown-notice"
+        style="text-align: center; padding: 2rem; background: #fff3e0; border-radius: 8px; color: #e65100;">
+        <h3 style="margin-top: 0;">Thank you for your recent commitment!</h3>
+        <p>You are in a cooldown period to ensure your health.</p>
+        <div id="cooldown-timer" style="font-size: 1.5rem; font-weight: bold; margin: 1rem 0; color: #d84315;"></div>
+        <p>Eligible again on: <strong>{{ user.next_eligible_date }}</strong></p>
+    </div>
+
+    <script>
+        // Parse the next eligible date (assuming YYYY-MM-DD format from Python date str)
+        const nextDateStr = "{{ user.next_eligible_date }}";
+        const nextDate = new Date(nextDateStr);
+
+        function updateTimer() {
+            const now = new Date();
+            const diff = nextDate - now;
+
+            if (diff <= 0) {
+                document.getElementById('cooldown-timer').innerText = "Cooldown Complete! Please refresh.";
+            } else {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('cooldown-timer').innerText = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            }
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>
+    {% endif %}
+</div>
+{% endblock %}

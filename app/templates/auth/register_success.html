@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="success-container" style="text-align: center; padding: 3rem;">
+    <div style="font-size: 4rem; color: var(--success-color);">
+        &#10004;
+    </div>
+    <h2>{{ get_text('registration_complete') }}</h2>
+    <p>{{ get_text('welcome_user_msg') }} <strong>{{ user.name }}</strong></p>
+
+    <div class="user-details-summary"
+        style="background: #f0f0f0; padding: 1rem; border-radius: 8px; margin: 1rem auto; max-width: 400px; text-align: left;">
+        <p><strong>{{ get_text('role') }}:</strong> {{ user.role }}</p>
+        <p><strong>{{ get_text('city') }}:</strong> {{ user.city }}</p>
+        {% if user.blood_type %}
+        <p><strong>{{ get_text('blood_type') }}:</strong> {{ user.blood_type }}</p>
+        {% endif %}
+    </div>
+
+    <a href="
+        {% if user.role == 'admin' %}
+            {{ url_for('admin.dashboard') }}
+        {% elif user.role == 'donor' or user.role == 'both' %}
+            {{ url_for('donor.dashboard') }}
+        {% else %}
+            {{ url_for('requester.dashboard') }}
+        {% endif %}
+    " class="btn">{{ get_text('continue_to_dashboard') }}</a>
+</div>
+{% endblock %}

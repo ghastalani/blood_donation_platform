@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Admin Dashboard</h2>
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Donors</h3>
+        <p class="number">{{ donor_count }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Requesters</h3>
+        <p class="number">{{ requester_count }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Open Requests</h3>
+        <p class="number">{{ open_requests_count }}</p>
+    </div>
+</div>
+
+<div class="admin-actions">
+    <a href="{{ url_for('admin.users') }}" class="btn">Manage Users</a>
+    <a href="{{ url_for('admin.broadcast') }}" class="btn">Create Broadcast Request</a>
+</div>
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #b71c1c;
+    }
+
+    .admin-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn {
+        display: inline-block;
+        background-color: #333;
+        color: white;
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}

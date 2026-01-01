@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ get_text('browse_donors') }}</h2>
+
+<form method="GET" class="filter-form"
+    style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; align-items: center;">
+    <div style="display: flex; gap: 1rem; width: 100%; max-width: 600px;">
+        <input type="text" name="city" placeholder="{{ get_text('city') }} (Required)"
+            value="{{ request.args.get('city', '') }}"
+            style="flex: 1; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px;" required
+            onfocus="this.select()">
+
+        {% if request.args.get('city') %}
+        <select name="blood_type" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px;">
+            <option value="">{{ get_text('select') }} {{ get_text('blood_type') }}</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+        </select>
+        {% endif %}
+
+        <button type="submit" class="btn" style="padding: 0.8rem 1.5rem;">{{ get_text('filter') if
+            request.args.get('city') else 'Search' }}</button>
+    </div>
+</form>
+
+{% if request.args.get('city') %}
+<div class="donors-grid"
+    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+    {% for donor in donors %}
+    <div class="card donor-card"
+        style="border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.2s;">
+        <div class="card-header" style="background: var(--primary-gradient); padding: 1.5rem; color: white;">
+            <h3 style="margin: 0; font-size: 1.25rem;">{{ donor.name }}</h3>
+            <span class="blood-badge"
+                style="background: white; color: var(--primary-color); padding: 0.25rem 0.75rem; border-radius: 20px; font-weight: bold; font-size: 0.9rem; float: right;">{{
+                donor.blood_type }}</span>
+        </div>
+        <div class="card-body" style="padding: 1.5rem;">
+            <p style="margin: 0.5rem 0;"><strong>{{ get_text('city') }}:</strong> {{ donor.city }}</p>
+            <p style="margin: 0.5rem 0; display: flex; align-items: center; justify-content: space-between;">
+                <strong>{{ get_text('status') }}:</strong>
+                {% if donor.is_available %}
+                <span class="badge success"
+                    style="background: #e8f5e9; color: #2e7d32; padding: 0.25rem 0.75rem; border-radius: 4px;">{{
+                    'Available' }}</span>
+                {% else %}
+                <span class="badge danger"
+                    style="background: #ffebee; color: #c62828; padding: 0.25rem 0.75rem; border-radius: 4px;">{{
+                    'Unavailable' }}</span>
+                {% endif %}
+            </p>
+            {% if not donor.is_available and donor.next_eligible_date %}
+            <small style="color: #666; display: block; margin-top: 0.25rem;">Available after: {{
+                donor.next_eligible_date }}</small>
+            {% endif %}
+
+            <button onclick="handleContact(this, {{ donor.id }})" class="btn secondary action-btn"
+                id="btn-{{ donor.id }}" style="width: 100%; margin-top: 1rem; padding: 0.75rem;" {% if not
+                donor.is_available %}disabled{% endif %}>
+                Check Status / Request
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <p style="grid-column: 1/-1; text-align: center; padding: 2rem;">{{ get_text('no_donors_found') }} in {{
+        request.args.get('city') }}</p>
+    {% endfor %}
+</div>
+{% else %}
+<div style="text-align: center; color: #666; padding: 3rem;">
+    <p>Please enter a city to search for donors.</p>
+</div>
+{% endif %}
+
+<a href="{{ url_for('requester.dashboard') }}" class="btn" style="margin-top: 2rem;">&larr; {{ get_text('back') }}</a>
+
+<!-- Modal -->
+<div id="contactModal" class="modal"
+    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+    <div class="modal-content"
+        style="background-color: #fefefe; padding: 2rem; border-radius: 12px; max-width: 400px; width: 90%; text-align: center; position: relative;">
+        <span onclick="closeModal()" class="close"
+            style="position: absolute; right: 20px; top: 15px; font-size: 28px; font-weight: bold; cursor: pointer; color: #666;">&times;</span>
+        <h3 style="color: var(--primary-color); margin-top: 0;">Donor Contact Info</h3>
+        <div id="modal-body" style="margin: 1.5rem 0; text-align: left;"></div>
+        <button onclick="closeModal()" class="btn">Close</button>
+    </div>
+</div>
+
+<script>
+    function handleContact(btn, donorId) {
+        // Check status first logic is implicit in request_contact call or we can call check first.
+        // To simplify: we call request_contact. If it returns 'approved', we change button to 'Contact'.
+        // If it returns 'pending', we say 'Pending'.
+        // If it returns 'success' (newly created), we say 'Pending'.
+
+        // Actually, 'Check Status / Request' is a bit vague. 
+        // Ideally on load we know the status. But for now let's query.
+
+        btn.disabled = true;
+        const originalText = btn.innerText;
+        btn.innerText = 'Checking...';
+
+        // We reuse the request_contact endpoint to check/create.
+        fetch(`/requester/request_contact/${donorId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'approved') {
+                    btn.classList.remove('secondary', 'warning');
+                    btn.classList.add('success');
+                    btn.innerText = 'Show Contact';
+                    btn.disabled = false;
+                    btn.onclick = function () { showContact(donorId); };
+                    // Trigger immediately if user intended? Maybe not.
+                } else if (data.status === 'pending') {
+                    btn.classList.remove('secondary');
+                    btn.classList.add('warning');
+                    btn.innerText = '{{ get_text("request_pending") }}';
+                    btn.disabled = true; // Stay disabled if pending
+                } else if (data.success) { // Newly sent
+                    btn.classList.remove('secondary');
+                    btn.classList.add('warning');
+                    btn.innerText = '{{ get_text("request_sent") }}';
+                    btn.disabled = true;
+                } else {
+                    alert(data.message);
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerText = originalText;
+            });
+    }
+
+    function showContact(donorId) {
+        fetch(`/requester/get_contact_info/${donorId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const body = document.getElementById('modal-body');
+                    const expiresAt = new Date(data.expires_at);
+
+                    body.innerHTML = `
+                <p><strong>Name:</strong> ${data.name}</p>
+                <p><strong>Phone:</strong> <a href="tel:${data.phone}">${data.phone}</a></p>
+                <p><strong>Email:</strong> <a href="mailto:${data.email}">${data.email}</a></p>
+                <hr>
+                <p style="color: #666; font-size: 0.9rem;">Visible for 10 minutes from approval.</p>
+                <p id="expiry-timer" style="color: #d32f2f; font-weight: bold;"></p>
+            `;
+                    document.getElementById('contactModal').style.display = 'flex';
+
+                    // Countdown for visibility
+                    const timer = setInterval(() => {
+                        const now = new Date();
+                        const diff = expiresAt - now;
+
+                        if (diff <= 0) {
+                            clearInterval(timer);
+                            closeModal();
+                            alert("Contact info visibility expired.");
+                            location.reload(); // Refresh to update status
+                        } else {
+                            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                            document.getElementById('expiry-timer').innerText = `Expires in: ${minutes}m ${seconds}s`;
+                        }
+                    }, 1000);
+
+                } else {
+                    alert(data.message);
+                }
+            });
+    }
+
+    function closeModal() {
+        document.getElementById('contactModal').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function (event) {
+        const modal = document.getElementById('contactModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+
+<style>
+    .warning {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+    }
+
+    .success {
+        background-color: #28a745 !important;
+        color: #fff !important;
+    }
+</style>
+{% endblock %}

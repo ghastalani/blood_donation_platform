@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="admin-users-container" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
+    <div class="header-section"
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="color: #8B0000;">User Management</h2>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn"
+            style="background: #666; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 6px;">&larr;
+            Back to Dashboard</a>
+    </div>
+
+    <div class="search-section" style="margin-bottom: 2rem;">
+        <form method="GET" style="display: flex; gap: 1rem;">
+            <input type="text" name="search" placeholder="Search by name or email..." value="{{ search }}"
+                style="flex: 1; padding: 0.75rem; border: 2px solid #E0E0E0; border-radius: 8px; font-size: 1rem;">
+            <button type="submit" class="btn"
+                style="background: #8B0000; color: white; padding: 0.75rem 2rem; border: none; border-radius: 8px; cursor: pointer;">Search</button>
+            {% if search %}
+            <a href="{{ url_for('admin.users') }}" class="btn"
+                style="background: #666; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 8px; display: flex; align-items: center;">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="users-table-container"
+        style="background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #F5F5F5;">
+                <tr>
+                    <th style="padding: 1rem; text-align: left; color: #8B0000; font-weight: 600;">ID</th>
+                    <th style="padding: 1rem; text-align: left; color: #8B0000; font-weight: 600;">Name</th>
+                    <th style="padding: 1rem; text-align: left; color: #8B0000; font-weight: 600;">Email</th>
+                    <th style="padding: 1rem; text-align: left; color: #8B0000; font-weight: 600;">Role</th>
+                    <th style="padding: 1rem; text-align: left; color: #8B0000; font-weight: 600;">City</th>
+                    <th style="padding: 1rem; text-align: left; color: #8B0000; font-weight: 600;">Phone</th>
+                    <th style="padding: 1rem; text-align: left; color: #8B0000; font-weight: 600;">Status</th>
+                    <th style="padding: 1rem; text-align: left; color: #8B0000; font-weight: 600;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr style="border-bottom: 1px solid #E0E0E0;">
+                    <td style="padding: 1rem;">{{ user.id if user.id else user['id'] }}</td>
+                    <td style="padding: 1rem; font-weight: 500;">{{ user.name if user.name else user['name'] }}</td>
+                    <td style="padding: 1rem;">{{ user.email if user.email else user['email'] }}</td>
+                    <td style="padding: 1rem;"><span
+                            style="background: #E3F2FD; color: #1976D2; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.9rem;">{{
+                            user.role if user.role else user['role'] }}</span></td>
+                    <td style="padding: 1rem;">{{ user.city if user.city else user['city'] }}</td>
+                    <td style="padding: 1rem;">{{ user.phone if user.phone else user['phone'] }}</td>
+                    <td style="padding: 1rem;">
+                        {% set is_active = user.is_active if user.is_active is defined else user['is_active'] %}
+                        {% if is_active %}
+                        <span
+                            style="background: #E8F5E9; color: #2E7D32; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.9rem;">Active</span>
+                        {% else %}
+                        <span
+                            style="background: #FFEBEE; color: #C62828; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.9rem;">Blocked</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% set user_id = user.id if user.id is defined else user['id'] %}
+                        {% set is_active = user.is_active if user.is_active is defined else user['is_active'] %}
+                        <a href="{{ url_for('admin.toggle_user', user_id=user_id) }}" style="background: {% if is_active %}#C62828{% else %}#2E7D32{% endif %}; 
+                                  color: white; 
+                                  padding: 0.5rem 1rem; 
+                                  text-decoration: none; 
+                                  border-radius: 6px; 
+                                  font-size: 0.9rem;
+                                  display: inline-block;">
+                            {% if is_active %}Block{% else %}Unblock{% endif %}
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="padding: 2rem; text-align: center; color: #666;">No users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
