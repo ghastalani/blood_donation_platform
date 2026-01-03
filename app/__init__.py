@@ -1,24 +1,16 @@
 from flask import Flask
 from config import Config
-import mysql.connector
+import os
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Initialize DB connection check (simple check)
-    try:
-        conn = mysql.connector.connect(
-            host=app.config['DB_HOST'],
-            user=app.config['DB_USER'],
-            password=app.config['DB_PASSWORD']
-        )
-        cursor = conn.cursor()
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {app.config['DB_NAME']}")
-        conn.close()
-        print(f"Database {app.config['DB_NAME']} checked/created.")
-    except Exception as e:
-        print(f"Error connecting to MySQL: {e}")
+    # Ensure database is initialized
+    from app.models import init_database
+    with app.app_context():
+        init_database()
+        print("Database initialized successfully.")
 
     # Language Support
     from flask import request, session, g

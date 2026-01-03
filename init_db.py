@@ -1,32 +1,27 @@
-import mysql.connector
-from config import Config
+import sqlite3
+import os
 
 def init_db():
     try:
-        conn = mysql.connector.connect(
-            host=Config.DB_HOST,
-            user=Config.DB_USER,
-            password=Config.DB_PASSWORD
-        )
+        # Get database path
+        db_path = os.path.join(os.path.dirname(__file__), 'app.db')
+        
+        conn = sqlite3.connect(db_path)
+        # Enable foreign key constraints
+        conn.execute('PRAGMA foreign_keys = ON')
         cursor = conn.cursor()
         
-        # Create DB if not exists
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {Config.DB_NAME}")
-        cursor.execute(f"USE {Config.DB_NAME}")
-        
         # Read schema
-        with open('schema.sql', 'r') as f:
+        schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
+        with open(schema_path, 'r', encoding='utf-8') as f:
             schema = f.read()
         
-        # Execute schema
-        # Split by ; to execute multiple statements
-        statements = schema.split(';')
-        for statement in statements:
-            if statement.strip():
-                cursor.execute(statement)
+        # Execute schema (SQLite can handle multiple statements with executescript)
+        cursor.executescript(schema)
         
         conn.commit()
         print("Database initialized successfully.")
+        print(f"Database created at: {db_path}")
         conn.close()
     except Exception as e:
         print(f"Error initializing database: {e}")
